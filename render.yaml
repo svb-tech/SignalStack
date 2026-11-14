@@ -1,0 +1,15 @@
+# Free deployment: Render free web service + MongoDB Atlas M0 (free). Set MONGODB_URI and GROQ_API_KEY as env vars (JWT_SECRET is generated for you).
+# Note: Render free services sleep after inactivity, so in-process cron only fires while awake — use an uptime pinger
+# (e.g. UptimeRobot free) hitting /api/health, or run locally/Docker for guaranteed schedules. The boot-time catch-up job covers missed weekly briefs.
+services:
+  - type: web
+    name: signal-stack
+    runtime: docker
+    plan: free
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

@@ -1,0 +1,5 @@
+{
+  "_comment": "Optional. Keys are question numbers as shown by the interview (\"1\", \"2\", ...). Fill with the founder's REAL answers; empty/missing = skipped. Questions are generated dynamically, so read them first with an interactive run.",
+  "1": "",
+  "2": ""
+}
