@@ -160,12 +160,29 @@ Return JSON { "executiveSummary": [{ "headline", "whyItMatters", "signals": ["S1
 }
 
 export async function emailBrief(brief, company, to) {
-  if (!cfg.smtp.host) throw new Error('SMTP is not configured (SMTP_HOST in .env)');
-  const t = nodemailer.createTransport({ host: cfg.smtp.host, port: cfg.smtp.port, auth: cfg.smtp.user ? { user: cfg.smtp.user, pass: cfg.smtp.pass } : undefined });
-  await t.sendMail({ from: cfg.smtp.from || cfg.smtp.user, to: to || company.settings.brief.emailTo, subject: `Monday Morning Brief: ${company.name} (${brief.weekKey})`, html: brief.html, text: brief.markdown });
+  const recipients = String(to || company.settings.brief.emailTo || '').split(/[,;\s]+/).filter(Boolean);
+  if (!recipients.length) throw new Error('No recipient email address');
+  const subject = `Monday Morning Brief: ${company.name} (${brief.weekKey})`;
+
+  if (cfg.resend.key) {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${cfg.resend.key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: cfg.resend.from, to: recipients, subject, html: brief.html, text: brief.markdown }),
+      signal: AbortSignal.timeout(30000),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Resend error (${res.status}): ${data.message || 'request failed'}`);
+  } else if (cfg.smtp.host) {
+    const t = nodemailer.createTransport({ host: cfg.smtp.host, port: cfg.smtp.port, auth: cfg.smtp.user ? { user: cfg.smtp.user, pass: cfg.smtp.pass } : undefined });
+    await t.sendMail({ from: cfg.smtp.from || cfg.smtp.user, to: recipients, subject, html: brief.html, text: brief.markdown });
+  } else {
+    throw new Error('Email is not configured: set RESEND_API_KEY (or SMTP_HOST) in server/.env');
+  }
+
   brief.emailedAt = new Date();
   await brief.save();
-}
+} 
 
 // ------------------------------------------------------------------ rendering
 const fmt = istDate;

@@ -33,6 +33,10 @@ export const cfg = {
     maxArticleFetch: 5,
     lookbackDays: 45,
   },
+    resend: {
+    key: process.env.RESEND_API_KEY || '',
+    from: process.env.RESEND_FROM || 'Signal Stack <onboarding@resend.dev>',
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: +process.env.SMTP_PORT || 587,
